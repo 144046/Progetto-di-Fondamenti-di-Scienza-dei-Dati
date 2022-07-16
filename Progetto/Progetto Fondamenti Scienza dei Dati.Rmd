@@ -1,0 +1,948 @@
+---
+title: "Progetto Fondamenti di Scienza dei Dati"
+author: "Davide Strazzi 144046"
+date: "2022-07-18"
+output: html_document
+---
+## Inizializzazioni e Pulizia dei Dati
+
+Inizio richiamando le librerie necessarie all'analisi dei dati
+```{r}
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(tibble)
+library(knitr)
+
+
+Daily = read.csv("LGBT_Survey_DailyLife.csv", na.strings =c("Don`t know",";"))
+Discrimination = read.csv("LGBT_Survey_Discrimination.csv", na.strings =c("Don`t know",":"))
+Transgender = read.csv("LGBT_Survey_TransgenderSpecificQuestions.csv", na.strings =c("Don`t know",":"))
+```
+
+Prima cosa da fare è eliminare le colonne inutili per la nostra analisi
+```{r}
+Daily = subset(Daily, select = -c(notes))
+Discrimination = subset(Discrimination, select = -c(notes))
+Transgender = subset(Transgender, select = -c(notes))
+Daily$percentage = as.numeric(Daily$percentage)
+Discrimination$percentage = as.numeric(Discrimination$percentage)
+Transgender$percentage = as.numeric(Transgender$percentage)
+
+```
+
+Poi analizzo tutte le domande poste e decido quali sono importanti per il nostro studio e quali no
+```{r}
+#Daily
+Daily %>%
+unite(question, question_code, question_label, sep="-") %>%   #tutto questo codice ripetuto per ogni csv serve a visualizzare le domande del dataset per trovare quelle ininfluenti
+group_by(question) %>%
+summarise()
+
+Daily = Daily %>% 
+  filter( question_code != "c1_c") %>%
+  filter( question_code != "b1_e") %>%
+  filter( question_code != "b1_f") %>%
+  filter( question_code !="c1_b") %>%
+  filter( question_code !="h11") %>%
+  filter( question_code !="h14") %>%
+  filter( question_code !="h15") %>%
+  filter( question_code !="h16") %>%
+  filter( question_code !="h9") %>%
+  filter( question_code !="h9_1") %>%
+  filter( question_code !="h9_2") %>%
+  filter( question_code !="i1") %>%
+  filter( question_code !="g3_a") %>%
+  filter( question_code !="g3_b") %>%
+  filter( question_code !="g3_c") %>%
+  filter( question_code !="g3_d") %>%
+  filter( question_code !="g3_e") %>%
+  filter( question_code !="g3_f") %>%
+  filter( question_code !="g3_g") %>%
+  filter( question_code !="g1_a") %>%
+  filter( question_code !="g2_a") %>%
+  filter( question_code !="g2_b") %>%
+  filter( question_code !="g2_c") %>%
+  filter( question_code !="g2_d") %>%
+  filter( question_code !="open_at_work") %>%
+  filter( question_code !="open_at_school")
+
+
+
+#Discrimination
+Discrimination %>%
+unite(question, question_code, question_label, sep="-") %>%
+group_by(question) %>%
+summarise()
+
+Discrimination = Discrimination %>%
+  filter( question_code != "c10") %>%
+  filter( question_code != "c7") %>%
+  filter( question_code != "c8a_b") %>%
+  filter( question_code != "c8a_d") %>%
+  filter( question_code != "c9_b") %>%
+  filter( question_code != "c9_d") %>%
+  filter( question_code != "c9_e")
+
+
+#Transgender
+Transgender %>%
+unite(question, question_code, question_label, sep="-") %>%
+group_by(question) %>%
+summarise()
+
+Transgender = Transgender %>%
+  filter( question_code != "tr2") %>%
+  filter( question_code != "tr3") %>%
+  filter( question_code != "tr8_a") %>%
+  filter( question_code != "tr8_b") %>%
+  filter( question_code != "tr8_c") %>%
+  filter( question_code != "tr8_d") %>%
+  filter( question_code != "tr8_e") %>%
+  filter( question_code != "tr8_f") %>%
+  filter( question_code != "tr8_g") %>%
+  filter( question_code != "tr8_h")
+```
+
+
+
+## Domanda 1: Qual'è il paese dove la comunità LGBT vive meglio / peggio?
+
+dati sul malessere
+```{r}
+# per ogni subset fiultro la domanda da analizzare, cerco il risultato "very widespread" e vedo che paese ha la percentuale maggiore
+#per ogni domanda pertinente ripeto questo procedimento riustilizzando le variabili lesbx etc., creando una nuova tibble per ogni domanda che poi verrano tutte unite
+
+
+lesbx = Daily %>%
+  filter(question_code =="b1_a")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Lesbian")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+
+gayx = Daily %>%
+  filter(question_code =="b1_a")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Gay")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+biwx = Daily %>%
+  filter(question_code =="b1_a")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual women")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+bimx = Daily %>%
+  filter(question_code =="b1_a")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual men")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+transx = Daily %>%
+  filter(question_code =="b1_a")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Transgender")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+  
+
+massimo_very_widespread_b1_a= tibble( 
+  subset = c("Lesbian", "Gay", "Bisexual women", "Bisexual men", "Trangender"),
+  CountryCode = c(lesbx$CountryCode[1], gayx$CountryCode[1], biwx$CountryCode[1], bimx$CountryCode[1], transx$CountryCode[1]),
+  percentage = c(lesbx$percentage[1], gayx$percentage[1], biwx$percentage[1], bimx$percentage[1], transx$percentage[1])
+  
+)
+
+
+
+#b1_b 
+
+
+lesbx = Daily %>%
+  filter(question_code =="b1_b")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Lesbian")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+
+gayx = Daily %>%
+  filter(question_code =="b1_b")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Gay")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+biwx = Daily %>%
+  filter(question_code =="b1_b")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual women")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+bimx = Daily %>%
+  filter(question_code =="b1_b")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual men")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+transx = Daily %>%
+  filter(question_code =="b1_b")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Transgender")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+massimo_very_widespread_b1_b= tibble( 
+  subset = c("Lesbian", "Gay", "Bisexual women", "Bisexual men", "Trangender"),
+  CountryCode = c(lesbx$CountryCode[1], gayx$CountryCode[1], biwx$CountryCode[1], bimx$CountryCode[1], transx$CountryCode[1]),
+  percentage = c(lesbx$percentage[1], gayx$percentage[1], biwx$percentage[1], bimx$percentage[1], transx$percentage[1])
+  
+)
+
+
+
+
+#b1_c
+
+lesbx = Daily %>%
+  filter(question_code =="b1_c")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Lesbian")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+
+gayx = Daily %>%
+  filter(question_code =="b1_c")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Gay")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+biwx = Daily %>%
+  filter(question_code =="b1_c")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual women")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+bimx = Daily %>%
+  filter(question_code =="b1_c")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual men")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+transx = Daily %>%
+  filter(question_code =="b1_c")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Transgender")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+massimo_very_widespread_b1_c= tibble( 
+  subset = c("Lesbian", "Gay", "Bisexual women", "Bisexual men", "Trangender"),
+  CountryCode = c(lesbx$CountryCode[1], gayx$CountryCode[1], biwx$CountryCode[1], bimx$CountryCode[1], transx$CountryCode[1]),
+  percentage = c(lesbx$percentage[1], gayx$percentage[1], biwx$percentage[1], bimx$percentage[1], transx$percentage[1])
+  
+)
+
+
+#b1_d
+
+lesbx = Daily %>%
+  filter(question_code =="b1_d")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Lesbian")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+
+gayx = Daily %>%
+  filter(question_code =="b1_d")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Gay")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+biwx = Daily %>%
+  filter(question_code =="b1_d")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual women")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+bimx = Daily %>%
+  filter(question_code =="b1_d")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual men")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+transx = Daily %>%
+  filter(question_code =="b1_d")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Transgender")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+massimo_very_widespread_b1_d= tibble( 
+  subset = c("Lesbian", "Gay", "Bisexual women", "Bisexual men", "Trangender"),
+  CountryCode = c(lesbx$CountryCode[1], gayx$CountryCode[1], biwx$CountryCode[1], bimx$CountryCode[1], transx$CountryCode[1]),
+  percentage = c(lesbx$percentage[1], gayx$percentage[1], biwx$percentage[1], bimx$percentage[1], transx$percentage[1])
+  
+)
+
+
+
+
+
+
+lesbx = Daily %>%
+  filter(question_code =="c1a_a")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Lesbian")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+
+gayx = Daily %>%
+  filter(question_code =="c1a_a")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Gay")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+biwx = Daily %>%
+  filter(question_code =="c1a_a")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual women")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+bimx = Daily %>%
+  filter(question_code =="c1a_a")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual men")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+transx = Daily %>%
+  filter(question_code =="c1a_a")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Transgender")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+  
+
+massimo_very_widespread_c1_a= tibble( 
+  subset = c("Lesbian", "Gay", "Bisexual women", "Bisexual men", "Trangender"),
+  CountryCode = c(lesbx$CountryCode[1], gayx$CountryCode[1], biwx$CountryCode[1], bimx$CountryCode[1], transx$CountryCode[1]),
+  percentage = c(lesbx$percentage[1], gayx$percentage[1], biwx$percentage[1], bimx$percentage[1], transx$percentage[1])
+  
+)
+
+
+
+#c1_b 
+
+
+lesbx = Daily %>%
+  filter(question_code =="c1a_b")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Lesbian")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+
+gayx = Daily %>%
+  filter(question_code =="c1a_b")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Gay")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+biwx = Daily %>%
+  filter(question_code =="c1a_b")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual women")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+bimx = Daily %>%
+  filter(question_code =="c1a_b")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual men")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+transx = Daily %>%
+  filter(question_code =="c1a_b")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Transgender")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+massimo_very_widespread_c1_b= tibble( 
+  subset = c("Lesbian", "Gay", "Bisexual women", "Bisexual men", "Trangender"),
+  CountryCode = c(lesbx$CountryCode[1], gayx$CountryCode[1], biwx$CountryCode[1], bimx$CountryCode[1], transx$CountryCode[1]),
+  percentage = c(lesbx$percentage[1], gayx$percentage[1], biwx$percentage[1], bimx$percentage[1], transx$percentage[1])
+  
+)
+
+
+
+
+#c1_c
+
+lesbx = Daily %>%
+  filter(question_code =="c1a_c")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Lesbian")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+
+gayx = Daily %>%
+  filter(question_code =="c1a_c")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Gay")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+biwx = Daily %>%
+  filter(question_code =="c1a_c")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual women")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+bimx = Daily %>%
+  filter(question_code =="c1a_c")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual men")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+transx = Daily %>%
+  filter(question_code =="c1a_c")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Transgender")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+massimo_very_widespread_c1_c= tibble( 
+  subset = c("Lesbian", "Gay", "Bisexual women", "Bisexual men", "Trangender"),
+  CountryCode = c(lesbx$CountryCode[1], gayx$CountryCode[1], biwx$CountryCode[1], bimx$CountryCode[1], transx$CountryCode[1]),
+  percentage = c(lesbx$percentage[1], gayx$percentage[1], biwx$percentage[1], bimx$percentage[1], transx$percentage[1])
+  
+)
+
+
+#c1_d
+
+lesbx = Daily %>%
+  filter(question_code =="c1a_d")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Lesbian")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+
+gayx = Daily %>%
+  filter(question_code =="c1a_d")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Gay")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+biwx = Daily %>%
+  filter(question_code =="c1a_d")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual women")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+bimx = Daily %>%
+  filter(question_code =="c1a_d")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual men")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+transx = Daily %>%
+  filter(question_code =="c1a_d")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Transgender")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+massimo_very_widespread_c1_d= tibble( 
+  subset = c("Lesbian", "Gay", "Bisexual women", "Bisexual men", "Trangender"),
+  CountryCode = c(lesbx$CountryCode[1], gayx$CountryCode[1], biwx$CountryCode[1], bimx$CountryCode[1], transx$CountryCode[1]),
+  percentage = c(lesbx$percentage[1], gayx$percentage[1], biwx$percentage[1], bimx$percentage[1], transx$percentage[1])
+  
+)
+
+massimo_very_widespread_b1_a_b = union(massimo_very_widespread_b1_a, massimo_very_widespread_b1_b)
+massimo_very_widespread_b1_c_d = union(massimo_very_widespread_b1_c, massimo_very_widespread_b1_d)
+massimo_very_widespread_c1_a_b = union(massimo_very_widespread_c1_a, massimo_very_widespread_c1_b)
+massimo_very_widespread_c1_c_d = union(massimo_very_widespread_c1_c, massimo_very_widespread_c1_d)
+massimo_very_widespread_b1= union(massimo_very_widespread_b1_a_b, massimo_very_widespread_b1_c_d)
+massimo_very_widespread_c1= union(massimo_very_widespread_c1_a_b, massimo_very_widespread_c1_c_d)
+massimo_very_widespread_negativo= union(massimo_very_widespread_b1, massimo_very_widespread_c1)
+
+
+massimo_very_widespread_negativo%>%
+  group_by(CountryCode)%>%
+  summarise(count=n())
+
+
+  
+```
+dati sul benessere
+```{r}
+lesbx = Daily %>%
+  filter(question_code =="b1_g")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Lesbian")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+
+gayx = Daily %>%
+  filter(question_code =="b1_g")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Gay")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+biwx = Daily %>%
+  filter(question_code =="b1_g")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual women")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+bimx = Daily %>%
+  filter(question_code =="b1_g")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual men")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+transx = Daily %>%
+  filter(question_code =="b1_g")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Transgender")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+  
+
+massimo_very_widespread_b1_g= tibble( 
+  subset = c("Lesbian", "Gay", "Bisexual women", "Bisexual men", "Trangender"),
+  CountryCode = c(lesbx$CountryCode[1], gayx$CountryCode[1], biwx$CountryCode[1], bimx$CountryCode[1], transx$CountryCode[1]),
+  percentage = c(lesbx$percentage[1], gayx$percentage[1], biwx$percentage[1], bimx$percentage[1], transx$percentage[1])
+  
+)
+
+
+
+#b1_h 
+
+
+lesbx = Daily %>%
+  filter(question_code =="b1_h")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Lesbian")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+
+gayx = Daily %>%
+  filter(question_code =="b1_h")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Gay")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+biwx = Daily %>%
+  filter(question_code =="b1_h")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual women")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+bimx = Daily %>%
+  filter(question_code =="b1_h")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual men")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+transx = Daily %>%
+  filter(question_code =="b1_h")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Transgender")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+massimo_very_widespread_b1_h= tibble( 
+  subset = c("Lesbian", "Gay", "Bisexual women", "Bisexual men", "Trangender"),
+  CountryCode = c(lesbx$CountryCode[1], gayx$CountryCode[1], biwx$CountryCode[1], bimx$CountryCode[1], transx$CountryCode[1]),
+  percentage = c(lesbx$percentage[1], gayx$percentage[1], biwx$percentage[1], bimx$percentage[1], transx$percentage[1])
+  
+)
+
+
+
+
+#b1_i
+
+lesbx = Daily %>%
+  filter(question_code =="b1_i")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Lesbian")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+
+gayx = Daily %>%
+  filter(question_code =="b1_i")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Gay")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+biwx = Daily %>%
+  filter(question_code =="b1_i")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual women")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+bimx = Daily %>%
+  filter(question_code =="b1_i")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Bisexual men")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+transx = Daily %>%
+  filter(question_code =="b1_i")%>%
+  filter(answer=="Very widespread")%>%
+  filter(subset=="Transgender")%>%
+  filter(percentage == max(percentage, na.rm=TRUE))
+
+massimo_very_widespread_b1_i= tibble( 
+  subset = c("Lesbian", "Gay", "Bisexual women", "Bisexual men", "Trangender"),
+  CountryCode = c(lesbx$CountryCode[1], gayx$CountryCode[1], biwx$CountryCode[1], bimx$CountryCode[1], transx$CountryCode[1]),
+  percentage = c(lesbx$percentage[1], gayx$percentage[1], biwx$percentage[1], bimx$percentage[1], transx$percentage[1])
+  
+)
+
+
+
+massimo_very_widespread_b1_g_h = union(massimo_very_widespread_b1_g, massimo_very_widespread_b1_h)
+massimo_very_widespread_positivo = union(massimo_very_widespread_b1_g_h, massimo_very_widespread_b1_i)
+
+
+massimo_very_widespread_positivo%>%
+  group_by(CountryCode)%>%
+  summarise(count=n())%>%
+  arrange(count)
+```
+conferma tramite Discrimination
+```{r}
+No_Percentage = Discrimination%>%
+  filter( answer == "No" | answer == "Never")%>%
+  filter( question_code !="c6")%>%
+  filter( question_code !="c8a_a")%>%
+  filter( question_code !="c9_a")%>%
+  filter( question_code !="c10")%>%
+  group_by(CountryCode)%>%
+  summarise(media = mean(percentage, na.rm=TRUE))%>%
+  arrange(desc(media))
+
+No_Percentage
+```
+conferma tramite Discrimination
+```{r}
+Yes_Percentage = Discrimination%>%
+  filter( answer == "Yes" | answer == "Always")%>%
+  filter( question_code !="c6")%>%
+  filter( question_code !="c8a_a")%>%
+  filter( question_code !="c9_a")%>%
+  filter( question_code !="c10")%>%
+  group_by(CountryCode)%>%
+  summarise(media = mean(percentage, na.rm=TRUE))%>%
+  arrange(desc(media))
+
+Yes_Percentage
+
+
+```
+quanti non riportano discriminazioni
+```{r}
+Report_percentage = Discrimination %>%
+  filter( question_code =="c6")%>%
+  filter( answer == "No")%>%
+  group_by(CountryCode)%>%
+  summarise(media = mean(percentage, na.rm=TRUE))%>%
+  arrange(desc(media))
+
+Report_percentage
+```
+
+## Domanda 2: Dati generali sui subset della comunità LGBT
+
+```{r}
+
+# media del livello di soddisfazione generale
+
+
+lesbm = Daily %>%
+  filter(question_code == "g5") %>%
+  filter(subset=="Lesbian")%>%
+  mutate( valore = as.numeric(answer)*as.numeric(percentage))
+medialesb = sum(as.numeric(lesbm$valore),na.rm = TRUE) / sum(as.numeric(lesbm$percentage),na.rm = TRUE)
+
+gaym = Daily %>%
+  filter(question_code == "g5") %>%
+  filter(subset=="Gay")%>%
+  mutate( valore = as.numeric(answer)*as.numeric(percentage))
+mediagay = sum(as.numeric(gaym$valore),na.rm = TRUE) / sum(as.numeric(gaym$percentage),na.rm = TRUE)
+
+biwm = Daily %>%
+  filter(question_code == "g5") %>%
+  filter(subset=="Bisexual women")%>%
+  mutate( valore = as.numeric(answer)*as.numeric(percentage))
+mediabiw = sum(as.numeric(biwm$valore),na.rm = TRUE) / sum(as.numeric(biwm$percentage),na.rm = TRUE)
+
+bimm = Daily %>%
+  filter(question_code == "g5") %>%
+  filter(subset=="Bisexual men")%>%
+  mutate( valore = as.numeric(answer)*as.numeric(percentage))
+mediabim = sum(as.numeric(bimm$valore),na.rm = TRUE) / sum(as.numeric(bimm$percentage),na.rm = TRUE)
+
+transm = Daily %>%
+  filter(question_code == "g5") %>%
+  filter(subset=="Transgender")%>%
+  mutate( valore = as.numeric(answer)*as.numeric(percentage))
+mediatrans = sum(as.numeric(transm$valore),na.rm = TRUE) / sum(as.numeric(transm$percentage),na.rm = TRUE)
+  
+ 
+
+
+
+## media di livello di openness
+
+
+
+lesbo = Daily%>%
+  filter(question_code=="openness_cat4")%>%
+  filter( subset=="Lesbian")%>%
+  mutate (openness = ifelse(answer=="Very open", 4, if_else(answer=="Fairly open", 3, if_else (answer=="Rarely Open",2,1))))%>%
+  mutate (valore = as.numeric(openness)*as.numeric(percentage))
+lesbom= sum(as.numeric(lesbo$valore),na.rm=TRUE) / sum(as.numeric(lesbo$percentage), na.rm=TRUE)
+lesbom=10*lesbom/4
+
+
+gayo = Daily%>%
+  filter(question_code=="openness_cat4")%>%
+  filter( subset=="Gay")%>%
+  mutate (openness = ifelse(answer=="Very open", 4, if_else(answer=="Fairly open", 3, if_else (answer=="Rarely Open",2,1))))%>%
+  mutate (valore = as.numeric(openness)*as.numeric(percentage))
+gayom= sum(as.numeric(gayo$valore),na.rm=TRUE) / sum(as.numeric(gayo$percentage), na.rm=TRUE)
+gayom=10*gayom/4
+
+biwo = Daily%>%
+  filter(question_code=="openness_cat4")%>%
+  filter( subset=="Bisexual women")%>%
+  mutate (openness = ifelse(answer=="Very open", 4, if_else(answer=="Fairly open", 3, if_else (answer=="Rarely Open",2,1))))%>%
+  mutate (valore = as.numeric(openness)*as.numeric(percentage))
+biwom= sum(as.numeric(biwo$valore),na.rm=TRUE) / sum(as.numeric(biwo$percentage), na.rm=TRUE)
+biwom=10*biwom/4
+
+bimo = Daily%>%
+  filter(question_code=="openness_cat4")%>%
+  filter( subset=="Bisexual men")%>%
+  mutate (openness = ifelse(answer=="Very open", 4, if_else(answer=="Fairly open", 3, if_else (answer=="Rarely Open",2,1))))%>%
+  mutate (valore = as.numeric(openness)*as.numeric(percentage))
+bimom= sum(as.numeric(bimo$valore),na.rm=TRUE) / sum(as.numeric(bimo$percentage), na.rm=TRUE)
+bimom=10*bimom/4
+
+transo = Daily%>%
+  filter(question_code=="openness_cat4")%>%
+  filter( subset=="Transgender")%>%
+  mutate (openness = ifelse(answer=="Very open", 4, if_else(answer=="Fairly open", 3, if_else (answer=="Rarely Open",2,1))))%>%
+  mutate (valore = as.numeric(openness)*as.numeric(percentage))
+transom= sum(as.numeric(transo$valore),na.rm=TRUE) / sum(as.numeric(transo$percentage), na.rm=TRUE)
+transom= 10*transom/4
+
+
+
+#discriminazione media percepita dai subset
+
+lesbd = Daily %>%
+  filter(question_code=="c1a_a")%>%
+  filter(subset=="Lesbian")%>%
+mutate (discrimination = ifelse(answer=="Very widespread", 4, if_else(answer=="Fairly widespread", 3, if_else (answer=="Fairly rare",2, 1))))%>%
+  mutate (valore = as.numeric(discrimination)*as.numeric(percentage))
+lesbdm = sum(as.numeric(lesbd$valore),na.rm=TRUE) / (   (sum(as.numeric(lesbd$percentage), na.rm=TRUE)) - (sum ( (lesbd%>%filter(is.na(answer)))$percentage, na.rm = TRUE)))
+lesbdm=10*lesbdm/4
+
+gayd = Daily %>%
+  filter(question_code=="c1a_b")%>%
+  filter(subset=="Gay")%>%
+mutate (discrimination = ifelse(answer=="Very widespread", 4, if_else(answer=="Fairly widespread", 3, if_else (answer=="Fairly rare",2, 1))))%>%
+  mutate (valore = as.numeric(discrimination)*as.numeric(percentage))
+gaydm = sum(as.numeric(gayd$valore),na.rm=TRUE) / (   (sum(as.numeric(gayd$percentage), na.rm=TRUE)) - (sum ((gayd%>%filter(is.na(answer)))$percentage, na.rm = TRUE)))
+gaydm=10*gaydm/4
+
+biwd = Daily %>%
+  filter(question_code=="c1a_c")%>%
+  filter(subset=="Bisexual women")%>%
+mutate (discrimination = ifelse(answer=="Very widespread", 4, if_else(answer=="Fairly widespread", 3, if_else (answer=="Fairly rare",2, 1))))%>%
+  mutate (valore = as.numeric(discrimination)*as.numeric(percentage))
+biwdm = sum(as.numeric(biwd$valore),na.rm=TRUE) / (   (sum(as.numeric(biwd$percentage), na.rm=TRUE)) - (sum ((biwd%>%filter(is.na(answer)))$percentage, na.rm = TRUE)))
+biwdm=10*biwdm/4
+
+bimd = Daily %>%
+  filter(question_code=="c1a_c")%>%
+  filter(subset=="Bisexual men")%>%
+mutate (discrimination = ifelse(answer=="Very widespread", 4, if_else(answer=="Fairly widespread", 3, if_else (answer=="Fairly rare",2, 1))))%>%
+  mutate (valore = as.numeric(discrimination)*as.numeric(percentage))
+bimdm = sum(as.numeric(bimd$valore),na.rm=TRUE) / (   (sum(as.numeric(bimd$percentage), na.rm=TRUE)) - (sum ((bimd%>%filter(is.na(answer)))$percentage, na.rm = TRUE)))
+bimdm = 10*bimdm/4
+
+transd = Daily %>%
+  filter(question_code=="c1a_d")%>%
+  filter(subset=="Transgender")%>%
+mutate (discrimination = ifelse(answer=="Very widespread", 4, if_else(answer=="Fairly widespread", 3, if_else (answer=="Fairly rare",2, 1))))%>%
+  mutate (valore = as.numeric(discrimination)*as.numeric(percentage))
+transdm = sum(as.numeric(transd$valore),na.rm=TRUE) / (   (sum(as.numeric(transd$percentage), na.rm=TRUE)) - (sum ((transd%>%filter(is.na(answer)))$percentage, na.rm = TRUE)))
+transdm = 10*transdm/4
+
+
+
+graphic_tibble = tibble(
+  subset = c("Lesbian","Gay","Bisexual women","Bisexual men","Transgender"),
+  happiness = c(medialesb,mediagay,mediabiw,mediabim,mediatrans),
+  openness = c(lesbom,gayom,biwom,bimom,transom),
+  discrimination = c(lesbdm,gaydm,biwdm,bimdm,transdm)
+)
+
+
+ggplot(data=graphic_tibble)+
+  geom_point (mapping= aes(x=subset, y=happiness),color = "red") +
+  geom_point (mapping= aes(x=subset, y=openness),color="blue")+ 
+  geom_point (mapping= aes(x=subset, y=discrimination), color="purple")+
+  labs(
+    title = "Livelli di Felicità, Discriminazione e Openness dei diversi subsets",
+    subtitle = "Rosso = Felicità, Viola = Discriminazione, Blu = Openness",
+    x="subsets",
+    y="Voto medio tra 1 e 10",
+    
+  )
+
+```
+
+
+## Domanda Veloce: Cosa può cambiare l'Italia per migliorare la condizione delle persone LGBT?
+
+```{r}
+
+mean_anti_discrimination_policies = Daily %>%
+  filter(CountryCode == "Italy")%>%
+  filter(question_code == "b2_a") %>%
+  filter(answer == "Strongly agree")%>%
+  select(subset,percentage)
+mean_anti_discrimination_policies = mean(mean_anti_discrimination_policies$percentage)
+
+mean_protect_measures = Daily %>%
+  filter(CountryCode == "Italy")%>%
+  filter(question_code == "b2_b") %>%
+  filter(answer == "Strongly agree")%>%
+  select(subset,percentage)
+mean_protect_measures = mean(mean_protect_measures$percentage)
+
+mean_public_figures = Daily %>%
+  filter(CountryCode == "Italy")%>%
+  filter(question_code == "b2_c") %>%
+  filter(answer == "Strongly agree")%>%
+  select(subset,percentage)
+mean_public_figures = mean(mean_public_figures$percentage)
+
+mean_national_autorities = Daily %>%
+  filter(CountryCode == "Italy")%>%
+  filter(question_code == "b2_d") %>%
+  filter(answer == "Strongly agree")%>%
+  select(subset,percentage)
+mean_national_autorities = mean(mean_national_autorities$percentage)
+
+mean_training = Daily %>%
+  filter(CountryCode == "Italy")%>%
+  filter(question_code == "b2_e") %>%
+  filter(answer == "Strongly agree")%>%
+  select(subset,percentage)
+mean_training = mean(mean_training$percentage)
+
+mean_religion = Daily %>%
+  filter(CountryCode == "Italy")%>%
+  filter(question_code == "b2_f") %>%
+  filter(answer == "Strongly agree")%>%
+  select(subset,percentage)
+mean_religion = mean(mean_religion$percentage)
+
+mean_marry = Daily %>%
+  filter(CountryCode == "Italy")%>%
+  filter(question_code == "b2_g") %>%
+  filter(answer == "Strongly agree")%>%
+  select(subset,percentage)
+mean_marry = mean(mean_marry$percentage)
+
+mean_adoption = Daily %>%
+  filter(CountryCode == "Italy")%>%
+  filter(question_code == "b2_h") %>%
+  filter(answer == "Strongly agree")%>%
+  select(subset,percentage)
+mean_adoption = mean(mean_adoption$percentage)
+
+mean_recognition = Daily %>%
+  filter(CountryCode == "Italy")%>%
+  filter(question_code == "b2_i") %>%
+  filter(answer == "Strongly agree")%>%
+  select(subset,percentage)
+mean_recognition = mean(mean_recognition$percentage)
+
+opzioni_mean_percentage = tibble(
+  Miglioramenti = c("Regole anti-discriminazione sul posto di lavoro", "Misure implementate nelle scuole per il rispetto", "Figure pubbliche che supportano apertamente la comunità", "Autorità nazionali che supportano i diritti LGBT", "Addestramento di pubblici ufficiali sui diritti LGBT", "Miglior accettazione da parte di leader religiosi", "La possibilità di sposarsi", "La possibilità di adottare", "Riconoscimento di relazioni dello stesso sesso nell'Unione Europea"),
+  Percentuale = c(mean_anti_discrimination_policies,mean_protect_measures,mean_public_figures,mean_national_autorities,mean_training,mean_religion,mean_marry,mean_adoption,mean_recognition)
+)
+
+opzioni_mean_percentage%>%
+  arrange(desc(Percentuale))
+
+```
+
+
+## Domanda Veloce: qual'è il paese in cui le persone transgender nascondono di più la loro identità?
+
+```{r}
+Transgender %>%
+  filter(question_code=="tr9")%>%
+  filter(answer=="Yes")%>%
+  arrange(desc(percentage))%>%
+  select(CountryCode,percentage)
+  
+```
+
+
+## Domanda Veloce: quale modifica può migliorare in modo più efficace la condizione delle persone Transgender?
+
+```{r}
+mean_medical = Transgender %>%
+  filter(question_code == "tr6_a") %>%
+  filter(answer == "Strongly agree")
+mean_medical = mean(mean_medical$percentage, na.rm=TRUE)
+
+mean_legal = Transgender %>%
+  filter(question_code == "tr6_b") %>%
+  filter(answer == "Strongly agree")
+mean_legal = mean(mean_legal$percentage, na.rm=TRUE)
+
+mean_anti_discrimination = Transgender %>%
+  filter(question_code == "tr6_c") %>%
+  filter(answer == "Strongly agree")
+mean_anti_discrimination = mean(mean_anti_discrimination$percentage, na.rm=TRUE)
+
+mean_school = Transgender %>%
+  filter(question_code == "tr6_d") %>%
+  filter(answer == "Strongly agree")
+mean_school = mean(mean_school$percentage, na.rm=TRUE)
+
+mean_figures = Transgender %>%
+  filter(question_code == "tr6_e") %>%
+  filter(answer == "Strongly agree")
+mean_figures = mean(mean_figures$percentage, na.rm=TRUE)
+
+mean_national = Transgender %>%
+  filter(question_code == "tr6_f") %>%
+  filter(answer == "Strongly agree")
+mean_national = mean(mean_national$percentage, na.rm=TRUE)
+
+mean_training_forces = Transgender %>%
+  filter(question_code == "tr6_g") %>%
+  filter(answer == "Strongly agree")
+mean_training_forces = mean(mean_training_forces$percentage, na.rm=TRUE)
+
+mean_religious = Transgender %>%
+  filter(question_code == "tr6_h") %>%
+  filter(answer == "Strongly agree")
+mean_religious = mean(mean_religious$percentage, na.rm=TRUE)
+
+
+opzioni_mean_trans = tibble(
+  Miglioramenti = c("Migliori opzioni per il trattamento medico","Procedure legali più semplici per l'identificazione del proprio genere","Regole anti-discriminazione sul posto di lavoro", "Misure implementate nelle scuole per il rispetto", "Figure pubbliche che supportano apertamente le persone Transgender", "Autorità nazionali che supportano i diritti Trans", "Addestramento di pubblici ufficiali sui diritti Trans", "Miglior accettazione da parte di leader religiosi"),
+  Percentuale = c(mean_medical,mean_legal,mean_anti_discrimination,mean_school,mean_figures,mean_national,mean_training_forces,mean_religious)
+)
+
+opzioni_mean_trans%>%
+  arrange(desc(Percentuale))
+```
+
